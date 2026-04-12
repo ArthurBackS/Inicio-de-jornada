@@ -1,0 +1,15 @@
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\bin\Debug\net10.0\MeuProjetoCSharp.exe
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\bin\Debug\net10.0\MeuProjetoCSharp.deps.json
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\bin\Debug\net10.0\MeuProjetoCSharp.runtimeconfig.json
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\bin\Debug\net10.0\MeuProjetoCSharp.dll
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\bin\Debug\net10.0\MeuProjetoCSharp.pdb
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\MeuProjetoCSharp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\MeuProjetoCSharp.AssemblyInfoInputs.cache
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\MeuProjetoCSharp.AssemblyInfo.cs
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\MeuProjetoCSharp.csproj.CoreCompileInputs.cache
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\MeuProjetoCSharp.sourcelink.json
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\MeuProjetoCSharp.dll
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\refint\MeuProjetoCSharp.dll
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\MeuProjetoCSharp.pdb
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\MeuProjetoCSharp.genruntimeconfig.cache
+C:\Users\arthu\Inicio-de-jornada\MeuProjetoCSharp\obj\Debug\net10.0\ref\MeuProjetoCSharp.dll
