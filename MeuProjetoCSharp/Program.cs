@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
-using System.Security.Cryptography.X509Certificates;
+using System.IO;
 class Usuario
 {
     public String Nome{get; set;}
@@ -24,6 +20,7 @@ class Program
     public static void Main(string[] args) // MAIN  
     {
         List<Usuario> Usuarios = new List<Usuario>();
+        Usuarios = Carregar_Usuarios();
         bool Continuar = true;
         while (Continuar)
         {
@@ -58,6 +55,7 @@ class Program
                     break;
                 case 7:
                     Console.WriteLine("Obrigado por contar conosco!");
+                    Salvar_Usuarios(Usuarios);
                     Continuar = false;
                     break;
                 default:
@@ -75,6 +73,7 @@ class Program
             int Idade_Cadastrado = Perguntar_Idade();
             String Senha_Cadastrado = Perguntar_Senha();
             Usuarios.Add(new Usuario(Nome_Cadastrado, Idade_Cadastrado, Senha_Cadastrado));
+            File.AppendAllText("usuarios.txt", Nome_Cadastrado + ";" + Idade_Cadastrado + ";" + Senha_Cadastrado + "\n");
             Console.WriteLine("Usuário cadastrado! ");
             if (!Continuar_no_Loop())
             {
@@ -131,6 +130,7 @@ class Program
                             {
                                 Console.WriteLine("Nome alterado com sucesso, seja bem vindo " + Usuario_logar.Nome + "!");
                                 Usuario_logar.Nome = Alterar_Nome_Novo;
+                                Salvar_Usuarios(Usuarios);
                             }
                             else
                             {
@@ -146,6 +146,7 @@ class Program
                             {
                                 Console.WriteLine("Idade alterada com sucesso, seja bem vindo " + Usuario_logar.Nome + " de " + Usuario_logar.Idade + " anos!");
                                 Usuario_logar.Idade = Alterar_Idade_Nova;
+                                Salvar_Usuarios(Usuarios);
                             }
                             else
                             {
@@ -161,6 +162,7 @@ class Program
                             {
                                 Console.WriteLine("Senha alterada com sucesso!");
                                 Usuario_logar.Senha = Alterar_Senha_Nova;
+                                Salvar_Usuarios(Usuarios);
                             }
                             else
                             {
@@ -214,6 +216,7 @@ class Program
             else
             {
                 Usuarios.Remove(Removido);
+                Salvar_Usuarios(Usuarios);
                 Console.WriteLine("Usuário removido! ");
                 if (!Continuar_no_Loop())
                 {
@@ -243,6 +246,7 @@ class Program
                 Console.WriteLine("Nome: " + us_maior.Nome + "; ");
                 Console.WriteLine("Idade: " + us_maior.Idade + "; ");
                 Console.WriteLine("-- -- -- -- -- -- -- -- --"); 
+                i++;
             }
         }
     }
@@ -344,7 +348,7 @@ class Program
             String Perguntar_Resposta_Usuario = Console.ReadLine()!;
             if (String.IsNullOrWhiteSpace(Perguntar_Resposta_Usuario) || !int.TryParse(Perguntar_Resposta_Usuario, out int Perguntar_Resposta_Usuario_int) || Perguntar_Resposta_Usuario_int < 0)
             {
-                Console.WriteLine("Idade inválida! ");
+                Console.WriteLine("Resposta inválida! ");
                 Console.WriteLine("Tente novamente! ");
                 Console.WriteLine("-- -- -- -- -- -- -- -- --");
                 continue;
@@ -354,5 +358,47 @@ class Program
                 return Perguntar_Resposta_Usuario_int;
             }
         }
+    }
+    public static List<Usuario> Carregar_Usuarios()
+    {
+        List<Usuario> lista_usuarios = new List<Usuario>();
+        if (!File.Exists("usuarios.txt"))
+        {
+            return lista_usuarios;
+        }
+        String[] linhas = File.ReadAllLines("usuarios.txt");
+        foreach (var linha in linhas)
+        {
+            if (String.IsNullOrWhiteSpace(linha))
+            {
+                continue;
+            }
+            String[] partes = linha.Split(";");
+            if (partes.Length != 3)
+            {
+                continue;
+            }
+            if (!int.TryParse(partes[1], out int Idade_Carregada))
+            {
+                continue;
+            }
+            String Nome_Carregado = partes[0];
+            String Senha_Carregada = partes[2];
+            Usuario u = new Usuario(Nome_Carregado, Idade_Carregada, Senha_Carregada);
+            lista_usuarios.Add(u);
+        }
+        return lista_usuarios;
+    }
+    public static void Salvar_Usuarios(List<Usuario> Usuarios)
+    {
+        List<String> linhas_salvas = new List<String>();
+        foreach (var us_salvar in Usuarios)
+        {
+            String Nome_Salvo = us_salvar.Nome;
+            int Idade_Salva = us_salvar.Idade;
+            String Senha_Salva = us_salvar.Senha;
+            linhas_salvas.Add(Nome_Salvo + ";" + Idade_Salva + ";" + Senha_Salva);
+        }
+        File.WriteAllLines("usuarios.txt", linhas_salvas);
     }
 }
