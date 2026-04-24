@@ -1,26 +1,150 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-using System.IO;
+using Microsoft.Data.Sqlite;
+using SQLitePCL;
+class Database
+{
+    private const String caminho = "Data Source=Usuarios.db";
+    public void Iniciar_banco()
+    {
+        var Connection = new SqliteConnection(caminho);
+        Connection.Open();
+        var Command = Connection.CreateCommand();
+        Command.CommandText = @"CREATE TABLE IF NOT EXISTS usuarios (Id INTEGER PRIMARY KEY AUTOINCREMENT, Nome TEXT UNIQUE, Idade INTEGER, Senha TEXT);";
+        Command.ExecuteNonQuery();
+        Connection.Close();
+    }
+    public void Inserir_Usuario(String nome_inserido, int idade_inserida, String senha_inserida)
+    {
+        var Connection = new SqliteConnection(caminho);
+        Connection.Open();
+        var Command = Connection.CreateCommand();
+        Command.CommandText = @"INSERT INTO Usuarios (Nome, Idade, Senha) VALUES ($nome_inserido, $idade_inserida, $senha_inserida);";
+        Command.Parameters.AddWithValue("$nome_inserido", nome_inserido);
+        Command.Parameters.AddWithValue("$idade_inserida", idade_inserida);
+        Command.Parameters.AddWithValue("$senha_inserida", senha_inserida);
+        Command.ExecuteNonQuery();
+        Connection.Close();
+    }
+    public List<Usuario> Listar_Usuarios_banco()
+    {
+        List<Usuario> lista = new List<Usuario>();
+        var Connection = new SqliteConnection(caminho);
+        Connection.Open();
+        var Command = Connection.CreateCommand();
+        Command.CommandText = @"SELECT * FROM usuarios;";
+        var reader = Command.ExecuteReader();
+        while (reader.Read())
+            {
+            Usuario u = new Usuario();
+            u.Nome = reader.GetString(1);
+            u.Idade = reader.GetInt32(2);
+            u.Senha = reader.GetString(3);
+            u.Id = reader.GetInt32(0);
+            lista.Add(u);
+        }
+        return lista;
+    }
+    public bool Procurar_usuario_se_existe(String nome_procurado)
+    {
+        var Connection = new SqliteConnection(caminho);
+        Connection.Open();
+        var Command = Connection.CreateCommand();
+        Command.CommandText = @"SELECT 1 FROM usuarios WHERE Nome = $nome_procurado LIMIT 1";
+        Command.Parameters.AddWithValue("$nome_procurado", nome_procurado);
+        var resultado = Command.ExecuteScalar();
+        return resultado != null;
+    }
+    public bool Remover_Banco(String Nome_deletar, int Idade_deletar, String Senha_deletar)
+    {
+        var Connection = new SqliteConnection(caminho);
+        Connection.Open();
+        var Command = Connection.CreateCommand();
+        Command.CommandText = "DELETE FROM usuarios WHERE Nome = $Nome_deletar AND Idade = $Idade_deletar AND Senha = $Senha_deletar LIMIT 1";
+        Command.Parameters.AddWithValue("$Nome_deletar", Nome_deletar );
+        Command.Parameters.AddWithValue("$Idade_deletar", Idade_deletar);
+        Command.Parameters.AddWithValue("$Senha_deletar", Senha_deletar);
+        var conferir_delete = Command.ExecuteNonQuery();
+        Connection.Close();
+        return conferir_delete > 0;
+    }
+    public Usuario? Logar_Usuario_Banco(String Nome_Logar_Banco, String Senha_Logar_Banco)
+    {
+        var Connection = new SqliteConnection(caminho);
+        Connection.Open();
+        var Command = Connection.CreateCommand();
+        Command.CommandText = "SELECT * FROM usuarios WHERE Nome = $Nome_Logar_Banco AND Senha = $Senha_Logar_Banco LIMIT 1";
+        Command.Parameters.AddWithValue("$Nome_Logar_Banco", Nome_Logar_Banco);
+        Command.Parameters.AddWithValue("$Senha_Logar_Banco", Senha_Logar_Banco);
+        var Verificar_Login = Command.ExecuteReader();
+        Usuario u = null!;
+        if (Verificar_Login.Read())
+        {
+            u = new Usuario
+            {
+                Nome = Verificar_Login.GetString(1),
+                Idade = Verificar_Login.GetInt32(2),
+                Senha = Verificar_Login.GetString(3),
+                Id = Verificar_Login.GetInt32(0)
+            };
+        }
+        Connection.Close();
+        return u;
+    }
+    public bool Alterar_Nome_Login(String Nome_Velho_Login, String Nome_Novo_Login)
+    {
+        var Connection = new SqliteConnection(caminho);
+        Connection.Open();
+        var Command = Connection.CreateCommand();
+        Command.CommandText = "UPDATE usuarios SET Nome = $Nome_Novo WHERE Nome = $Nome_Velho AND NOT EXISTS (SELECT 1 FROM usuarios WHERE Nome = $Nome_Novo);";
+        Command.Parameters.AddWithValue("$Nome_Velho", Nome_Velho_Login);
+        Command.Parameters.AddWithValue("$Nome_Novo", Nome_Novo_Login);
+        var Linhas_alteradas = Command.ExecuteNonQuery();
+        Connection.Close();
+        return Linhas_alteradas > 0;
+    }
+    public bool Alterar_Idade_Login(int Idade_Velha_Login, int Idade_Nova_Login, int Id_Login)
+    {
+        var Connection = new SqliteConnection(caminho);
+        Connection.Open();
+        var Command = Connection.CreateCommand();
+        Command.CommandText = "UPDATE usuarios SET Idade = $Idade_Nova WHERE Idade = $Idade_Velha AND Id = $Id";
+        Command.Parameters.AddWithValue("$Idade_Velha", Idade_Velha_Login);
+        Command.Parameters.AddWithValue("$Idade_Nova", Idade_Nova_Login);
+        Command.Parameters.AddWithValue("$Id", Id_Login);
+        var Linhas_alteradas = Command.ExecuteNonQuery();
+        Connection.Close();
+        return Linhas_alteradas > 0;
+    }
+    public bool Alterar_Senha_Login(String Senha_Velha_Login, String Senha_Nova_Login, int Id_Login)
+    {
+        var Connection = new SqliteConnection(caminho);
+        Connection.Open();
+        var Command = Connection.CreateCommand();
+        Command.CommandText = "UPDATE usuarios SET Senha = $Senha_Nova WHERE Senha = $Senha_Velha AND Id = $Id_Login";
+        Command.Parameters.AddWithValue("$Senha_Velha", Senha_Velha_Login);
+        Command.Parameters.AddWithValue("$Senha_Nova", Senha_Nova_Login);
+        Command.Parameters.AddWithValue("$Id_Login", Id_Login);
+        var Linhas_alteradas = Command.ExecuteNonQuery();
+        Connection.Close();
+        return Linhas_alteradas > 0;
+    }
+}
 class Usuario
 {
-    public String Nome{get; set;}
+    public String? Nome{get; set;}
     public int Idade{get; set;}
-    public String Senha{get; set;}
-    public Usuario(String nome, int idade, String senha)
-    {
-        Nome = nome;
-        Idade = idade;
-        Senha = senha;
-    }
-
+    public String? Senha{get; set;}
+    public int Id {get; set;}
 }
 class Program
 {
     public static void Main(string[] args) // MAIN  
     {
-        List<Usuario> Usuarios = new List<Usuario>();
-        Usuarios = Carregar_Usuarios();
+        var db = new Database();
+        db.Iniciar_banco();
         bool Continuar = true;
         while (Continuar)
         {
@@ -36,26 +160,25 @@ class Program
             switch (Resposta_oficial)
             {
                 case 1:
-                    Cadastrar_Usuario(Usuarios);
+                    Cadastrar_Usuario();
                     break;
                 case 2:
-                    Logar_Usuario(Usuarios);
+                    Logar_Usuario();
                     break;
                 case 3:
-                    Listar_Usuarios(Usuarios);
+                    Listar_Usuarios();
                     break;
                 case 4:
-                    Listar_Maiores(Usuarios);
+                    Listar_Maiores();
                     break;
                 case 5:
-                    Procurar_Usuario(Usuarios);
+                    Procurar_Usuario();
                     break;
                 case 6:
-                    Remover_Usuario(Usuarios);
+                    Remover_Usuario();
                     break;
                 case 7:
                     Console.WriteLine("Obrigado por contar conosco!");
-                    Salvar_Usuarios(Usuarios);
                     Continuar = false;
                     break;
                 default:
@@ -64,16 +187,24 @@ class Program
             }
         }
     }
-    public static void Cadastrar_Usuario(List<Usuario> Usuarios)
+    public static void Cadastrar_Usuario()
     {
+        var db = new Database();
         bool Continuar_Cadastrando = true;
         while (Continuar_Cadastrando)
         {
             String Nome_Cadastrado = Perguntar_Nome();
-            int Idade_Cadastrado = Perguntar_Idade();
-            String Senha_Cadastrado = Perguntar_Senha();
-            Usuarios.Add(new Usuario(Nome_Cadastrado, Idade_Cadastrado, Senha_Cadastrado));
-            File.AppendAllText("usuarios.txt", Nome_Cadastrado + ";" + Idade_Cadastrado + ";" + Senha_Cadastrado + "\n");
+            var usuario_que_ja_existe = db.Procurar_usuario_se_existe(Nome_Cadastrado);
+            if (usuario_que_ja_existe) {
+                Console.WriteLine("O nome inserido já é possuído por outro usuário, tente outro nome!");
+                continue;
+            }
+            int Idade_Cadastrada = Perguntar_Idade();
+            String Senha_Cadastrada = Perguntar_Senha();
+            Usuario u = new Usuario();
+            u.Nome = Nome_Cadastrado;
+            u.Idade = Idade_Cadastrada;
+            u.Senha = Senha_Cadastrada;
             Console.WriteLine("Usuário cadastrado! ");
             if (!Continuar_no_Loop())
             {
@@ -85,16 +216,16 @@ class Program
             }
         }
     }
-    public static void Logar_Usuario(List<Usuario> Usuarios)
+    public static void Logar_Usuario()
     {
+        var db = new Database();
         bool Continuar_Logando = true;
         bool Logado;
         while (Continuar_Logando) {   
             String Nome_Logar = Perguntar_Nome();
-            int Idade_Logar = Perguntar_Idade();
             String Senha_Logar = Perguntar_Senha();
-            var Usuario_logar = Usuarios.FirstOrDefault(n => n.Nome == Nome_Logar && n.Idade == Idade_Logar && n.Senha == Senha_Logar);
-            if (Usuario_logar == null)
+            var Usuario_Login = db.Logar_Usuario_Banco(Nome_Logar, Senha_Logar);
+            if (Usuario_Login == null)
             {
                 Console.WriteLine("Usuário não encontrado! ");
                 bool Continuar_Logar = Continuar_no_Loop();
@@ -109,7 +240,7 @@ class Program
             }
             else
             {
-                Console.WriteLine("Olá, você logou no usuário " + Usuario_logar.Nome + " de " + Usuario_logar.Idade + " anos de idade! ");
+                Console.WriteLine("Olá, você logou no usuário " + Nome_Logar + "! ");
                 Logado = true;
                 while (Logado)
                 {
@@ -126,11 +257,11 @@ class Program
                             String Alterar_Nome_Novo = Perguntar_Nome();
                             Console.WriteLine("Digite o seu nome de usuário antiga para confirmar ");
                             String Alterar_Nome_Velho = Perguntar_Nome();
-                            if (Alterar_Nome_Velho == Usuario_logar.Nome)
+                            var Nome_Alterado = db.Alterar_Nome_Login(Alterar_Nome_Velho, Alterar_Nome_Novo);
+                            if (Nome_Alterado)
                             {
-                                Console.WriteLine("Nome alterado com sucesso, seja bem vindo " + Usuario_logar.Nome + "!");
-                                Usuario_logar.Nome = Alterar_Nome_Novo;
-                                Salvar_Usuarios(Usuarios);
+                                Console.WriteLine("Nome alterado com sucesso, seja bem-vindo " + Alterar_Nome_Novo + "!");
+                                
                             }
                             else
                             {
@@ -142,11 +273,11 @@ class Program
                             int Alterar_Idade_Nova = Perguntar_Idade();
                             Console.WriteLine("Digite a sua idade de usuário antiga para confirmar ");
                             int Alterar_Idade_Velha = Perguntar_Idade();
-                            if (Alterar_Idade_Velha == Usuario_logar.Idade)
+                            var Idade_Alterada = db.Alterar_Idade_Login(Alterar_Idade_Velha, Alterar_Idade_Nova, Usuario_Login.Id);
+                            if (Idade_Alterada)
                             {
-                                Console.WriteLine("Idade alterada com sucesso, seja bem vindo " + Usuario_logar.Nome + " de " + Usuario_logar.Idade + " anos!");
-                                Usuario_logar.Idade = Alterar_Idade_Nova;
-                                Salvar_Usuarios(Usuarios);
+                                Console.WriteLine("Idade alterada com sucesso, idade: " + Alterar_Idade_Nova + ". Seja bem-vindo!");
+
                             }
                             else
                             {
@@ -158,11 +289,11 @@ class Program
                             String Alterar_Senha_Nova = Perguntar_Senha();
                             Console.WriteLine("Digite o sua senha usuário antiga para confirmar ");
                             String Alterar_Senha_Velha = Perguntar_Senha();
-                            if (Alterar_Senha_Velha == Usuario_logar.Senha)
+                            var Senha_Alterada = db.Alterar_Senha_Login(Alterar_Senha_Velha, Alterar_Senha_Nova, Usuario_Login.Id);
+                            if (Senha_Alterada)
                             {
                                 Console.WriteLine("Senha alterada com sucesso!");
-                                Usuario_logar.Senha = Alterar_Senha_Nova;
-                                Salvar_Usuarios(Usuarios);
+                                
                             }
                             else
                             {
@@ -180,43 +311,47 @@ class Program
             }
         }
     }
-    public static void Listar_Usuarios(List<Usuario> Usuarios)
+    public static void Listar_Usuarios()
     {
-        if (Usuarios.Count == 0)
+        var db = new Database();
+        var verificar_lista = db.Listar_Usuarios_banco();
+        if (verificar_lista.Count == 0)
         {
-            Console.WriteLine("Lista vazia! ");
+            Console.WriteLine("Lista vazia!");
+            return;
         }
         else
         {
             int i = 1;
-            foreach (var us in Usuarios)
+            Console.WriteLine("Usuários: ");
+            foreach (var us in verificar_lista)
             {
                 Console.WriteLine("-- -- -- -- -- -- -- -- --");
                 Console.WriteLine("Usuário " + i + ":");
                 Console.WriteLine("Nome: " + us.Nome + "; ");
                 Console.WriteLine("Idade: " + us.Idade + "; ");
-                Console.WriteLine("-- -- -- -- -- -- -- -- --");
+                Console.WriteLine("-- -- -- -- -- -- -- -- --"); 
                 i++;
             }
         }
+
     }
-    public static void Remover_Usuario(List<Usuario> Usuarios)
+    public static void Remover_Usuario()
     {
+        var db = new Database();
         bool Continuar_Removendo = true;
         while (Continuar_Removendo)
         {
             String Nome_Remover = Perguntar_Nome();
             int Idade_Remover = Perguntar_Idade();
             String Senha_Remover = Perguntar_Senha();
-            var Removido = Usuarios.FirstOrDefault(n => n.Nome == Nome_Remover && n.Idade == Idade_Remover && n.Senha == Senha_Remover);
-            if (Removido == null)
+            var foi_removido = db.Remover_Banco(Nome_Remover, Idade_Remover, Senha_Remover);
+            if (!foi_removido)
             {
                 Console.WriteLine("Usuário inexistente!");
             }
             else
             {
-                Usuarios.Remove(Removido);
-                Salvar_Usuarios(Usuarios);
                 Console.WriteLine("Usuário removido! ");
                 if (!Continuar_no_Loop())
                 {
@@ -229,17 +364,20 @@ class Program
             }
         }
     }
-    public static void Listar_Maiores(List<Usuario> Usuarios)
+    public static void Listar_Maiores()
     {
-        var Maiores = Usuarios.Where(u => u.Idade >= 18);
-        if (!Maiores.Any())
+        var db = new Database();
+        var usuarios_maiores = db.Listar_Usuarios_banco().Where(n => n.Idade >= 18);
+        if (!usuarios_maiores.Any())
         {
-            Console.WriteLine("Lista vazia! ");
+            Console.WriteLine("Lista vazia!");
+            return;
         }
         else
         {
             int i = 1;
-            foreach (var us_maior in Maiores)
+            Console.WriteLine("Usuários: ");
+            foreach (var us_maior in usuarios_maiores)
             {
                 Console.WriteLine("-- -- -- -- -- -- -- -- --");
                 Console.WriteLine("Usuário " + i + ":");
@@ -250,20 +388,20 @@ class Program
             }
         }
     }
-    public static void Procurar_Usuario(List<Usuario> Usuarios)
+    public static void Procurar_Usuario()
     {
         bool Continuar_Procurando = true;
         while (Continuar_Procurando) {
             String Nome_Procurado = Perguntar_Nome();
-            int Idade_Procurado = Perguntar_Idade();
-            var Procurado = Usuarios.FirstOrDefault(n => n.Nome == Nome_Procurado && n.Idade == Idade_Procurado);
-            if (Procurado == null)
+            var db = new Database();
+            var UsuarioExiste = db.Procurar_usuario_se_existe(Nome_Procurado);
+            if (!UsuarioExiste)
             {
             Console.WriteLine("Usuário inexistente! ");
             }
             else
             {
-            Console.WriteLine("Usuário " + Procurado.Nome + " de " + Procurado.Idade + " anos, existe!");
+            Console.WriteLine("O nome digitado pertence à um usuário que existe!");
             Continuar_Procurando = Continuar_no_Loop();
             }
         }
@@ -291,7 +429,7 @@ class Program
         while (true) {
             Console.Write("Digite a idade do usuário: ");
             String Perguntar_Idade_Usuario = Console.ReadLine()!;
-            if (String.IsNullOrWhiteSpace(Perguntar_Idade_Usuario) || !int.TryParse(Perguntar_Idade_Usuario, out int Perguntar_Idade_Usuario_int) || Perguntar_Idade_Usuario_int < 0)
+            if (String.IsNullOrWhiteSpace(Perguntar_Idade_Usuario) || !int.TryParse(Perguntar_Idade_Usuario, out int Perguntar_Idade_Usuario_int) || Perguntar_Idade_Usuario_int < 0 || Perguntar_Idade_Usuario_int > 150)
             {
                 Console.WriteLine("Idade inválida! ");
                 Console.WriteLine("Tente novamente! ");
@@ -359,46 +497,5 @@ class Program
             }
         }
     }
-    public static List<Usuario> Carregar_Usuarios()
-    {
-        List<Usuario> lista_usuarios = new List<Usuario>();
-        if (!File.Exists("usuarios.txt"))
-        {
-            return lista_usuarios;
-        }
-        String[] linhas = File.ReadAllLines("usuarios.txt");
-        foreach (var linha in linhas)
-        {
-            if (String.IsNullOrWhiteSpace(linha))
-            {
-                continue;
-            }
-            String[] partes = linha.Split(";");
-            if (partes.Length != 3)
-            {
-                continue;
-            }
-            if (!int.TryParse(partes[1], out int Idade_Carregada))
-            {
-                continue;
-            }
-            String Nome_Carregado = partes[0];
-            String Senha_Carregada = partes[2];
-            Usuario u = new Usuario(Nome_Carregado, Idade_Carregada, Senha_Carregada);
-            lista_usuarios.Add(u);
-        }
-        return lista_usuarios;
-    }
-    public static void Salvar_Usuarios(List<Usuario> Usuarios)
-    {
-        List<String> linhas_salvas = new List<String>();
-        foreach (var us_salvar in Usuarios)
-        {
-            String Nome_Salvo = us_salvar.Nome;
-            int Idade_Salva = us_salvar.Idade;
-            String Senha_Salva = us_salvar.Senha;
-            linhas_salvas.Add(Nome_Salvo + ";" + Idade_Salva + ";" + Senha_Salva);
-        }
-        File.WriteAllLines("usuarios.txt", linhas_salvas);
-    }
 }
+// LINHA 500 EXATO KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
