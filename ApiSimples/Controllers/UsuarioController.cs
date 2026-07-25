@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using ApiSimples.Models.UsuarioModels;
+using ApiSimples.Models.DTOs.Request.CriarUsuarioRequest;
+using ApiSimples.Models.DTOs.Request.DeletarUsuarioRequest;
+using ApiSimples.Models.DTOs.Response.UsuarioResponse;
 using ApiSimples.Services.UsuarioServices;
 
 namespace ApiSimples.Controllers.UsuarioController;
@@ -8,49 +10,53 @@ namespace ApiSimples.Controllers.UsuarioController;
 [Route("Usuarios")]
 public class UsuarioController : ControllerBase
 {
-    UsuarioServices us_se = new();
+    UsuarioServices UsuarioServices = new UsuarioServices();
+
     [HttpGet]
-    public IActionResult ObterUsuarios()
+    public IActionResult GetUsuarios()
     {
-        return Ok(us_se.ReceberUsuarios());
+        return Ok(UsuarioServices.Obter_Todos_Usuarios_Service());
     }
+
     [HttpGet("Usuario/{Nome}")]
-    public IActionResult ObterUsuarioPorNome([FromRoute(Name = "Nome")] String Nome)
+    public IActionResult GetUsuarios_Nome([FromRoute(Name = "Nome")] string Nome)
     {
-        Usuario? u = us_se.ReceberUsuarioNome(Nome);
-        if (u != null)
+        var us = UsuarioServices.Procurar_Usuario_PorNome_Service(Nome);
+        if (us != null)
         {
-            return Ok(u);
+            return Ok(us);
         }
-        else
-        {
-            return NotFound();
-        }
+        return NotFound();
     }
+
     [HttpGet("Usuario/{Id:int}")]
-    public IActionResult ObterUsuarioPorNome([FromRoute(Name = "Id")] int Id)
+    public IActionResult GetUsuarios_Id([FromRoute(Name = "Id")] int Id)
     {
-        Usuario? u = us_se.ReceberUsuarioId(Id);
-        if (u != null)
+        var us = UsuarioServices.Procurar_Usuario_PorId_Service(Id);
+        if (us != null)
         {
-            return Ok(u);
+            return Ok(us);
         }
-        else
-        {
-            return NotFound();
-        }
+        return NotFound();
     }
+
     [HttpPost]
-    public IActionResult CriarUsuario([FromBody]Usuario us)
+    public IActionResult Post_Cadastro_Usuario([FromBody] Criar_Usuario_Request usuario_request)
     {
-        if (!us_se.CriarUsuario(us.Nome))
+        if (UsuarioServices.Cadastrar_Usuário_Service(usuario_request))
         {
-            return BadRequest("Nome ou senha incorretos, ou usuário com mesmo nome já existe.");
+            return Created($"/Usuarios/Usuario/{usuario_request.Nome}", usuario_request);
         }
-        else
+        return BadRequest("Nome ou senha inválidos, ou usuário com mesmo nome já existe.");
+    }
+
+    [HttpDelete("Usuario")]
+    public IActionResult Delete_Usuario([FromBody] Deletar_Usuario_Request usuario_request)
+    {
+        if (UsuarioServices.Deletar_Usuario_Service(usuario_request))
         {
-            Usuario? u = us_se.ReceberUsuarioNome(us.Nome);
-            return Created("Usuarios/Usuario/{u.Id}", u);
+            return Ok();
         }
+        return BadRequest("Nome ou senha incorretos.");
     }
 }
