@@ -1,11 +1,27 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ApiSimples.Models.DTOs.Request.CriarUsuarioRequest;
 
-public class Criar_Usuario_Request
+public class CriarUsuarioRequest
 {
-    public String Nome{get; set;} = "";
-    public String Senha{get; set;} = "";
-    public int Idade{get; set;}
-    public Criar_Usuario_Request(string Nome, String Senha, int Idade)
+    [Required]
+    [StringLength(30, MinimumLength = 3)]
+    public String Nome { get; set; } = "";
+
+    [Required]
+    [EmailAddress]
+    public String Email { get; set; } = "";
+
+    [Required]
+    [MinLength(8)]
+    public String Senha { get; set; } = "";
+
+    [Range(0, 150)]
+    public int Idade { get; set; }
+
+    public CriarUsuarioRequest() { }
+
+    public CriarUsuarioRequest(string Nome, String Senha, int Idade)
     {
         this.Nome = Nome;
         this.Senha = Senha;

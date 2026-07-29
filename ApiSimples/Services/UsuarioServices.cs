@@ -3,75 +3,87 @@ using ApiSimples.Models.DTOs.Response.UsuarioResponse;
 using ApiSimples.Models.DTOs.Request.CriarUsuarioRequest;
 using ApiSimples.Models.DTOs.Request.DeletarUsuarioRequest;
 using ApiSimples.Models.Entities.UsuarioEntities;
-using Microsoft.AspNetCore.Identity;
-using System.Reflection.Metadata.Ecma335;
+using System.ComponentModel.DataAnnotations;
 
 namespace ApiSimples.Services.UsuarioServices;
 
 public class UsuarioServices
 {
-    UsuarioRepository UsuarioRepository = new UsuarioRepository();
-    public bool Cadastrar_Usuário_Service(Criar_Usuario_Request User) {
+    private UsuarioRepository _repository;
+
+    public UsuarioServices(UsuarioRepository repository)
+    {
+        _repository = repository;
+    }
+    public async Task<bool> Cadastrar_Usuário_Service(CriarUsuarioRequest User) 
+    {
         if (String.IsNullOrWhiteSpace(User.Nome) || User.Nome.Length > 30 || User.Nome.Length < 3) {
+            return false;
+        }
+        else if (String.IsNullOrWhiteSpace(User.Email) || !new EmailAddressAttribute().IsValid(User.Email))
+        {
             return false;
         }
         else if (User.Idade < 0 || User.Idade > 150) {
             return false;
         }
-        else if (User.Senha.Length < 8) {
+        else if (String.IsNullOrWhiteSpace(User.Senha) || User.Senha.Length < 8) {
             return false;
         }
-        else if (UsuarioRepository.Procurar_Usuario_Nome_Repository(User.Nome) != null) {
+        else if (await _repository.ExisteUsuarioEmail(User.Email)) {
+            throw new Exception("Um usuário com mesmo email já existe.");
+        }
+        UsuarioEntity User_Entity = new UsuarioEntity(0, User.Nome, User.Email, User.Senha, User.Idade);
+        return await _repository.CriarUsuarioRepository(User_Entity);
+    }
+    public async Task<bool> Deletar_Usuario_Service(DeletarUsuarioRequest User)
+    {
+        UsuarioEntity? UserEntity = await _repository.ProcurarUsuarioEmailRepository(User.Email);
+        if (UserEntity == null)
+        {
             return false;
         }
-        else {
-            return UsuarioRepository.Criar_Usuario_Repository(User);
+        else if (User.Senha != UserEntity.Senha)
+        {
+            return false;
+        }
+        else
+        {
+            await _repository.DeletarUsuarioRepository(UserEntity);
+            return true;
         }
     }
-    public bool Deletar_Usuario_Service(Deletar_Usuario_Request User)
+    public async Task<UsuarioResponse?> Procurar_Usuario_PorEmail_Service(String Email) 
     {
-        return UsuarioRepository.Deletar_Usuario_Repository(User);
-    }
-    public UsuarioResponse? Procurar_Usuario_PorNome_Service(String Nome) 
-    {
-        UsuarioEntity? User_Entity = UsuarioRepository.Procurar_Usuario_Nome_Repository(Nome);
-        
-        if (User_Entity != null)
-            {
-            UsuarioResponse? User_Response = new UsuarioResponse(User_Entity.Nome, User_Entity.Idade);
-            return User_Response;
-            }
-        return null;
-    }
-    public UsuarioResponse? Procurar_Usuario_PorId_Service(int Id) 
-    {
-        UsuarioEntity? User_Entity = UsuarioRepository.Procurar_Usuario_Id_Repository(Id);
-
-        if (User_Entity != null)
-            {
-            UsuarioResponse? User_Response = new UsuarioResponse(User_Entity.Nome, User_Entity.Idade);
-            return User_Response;
-            }
-        return null;
-    }
-    public List<UsuarioResponse>? Obter_Todos_Usuarios_Service() 
-    {
-        List<UsuarioResponse>? Lista_Usuarios_Response = new();
-
-        List<UsuarioEntity>? Lista_Usuarios_Entities = new List<UsuarioEntity>();
-
-        Lista_Usuarios_Entities = UsuarioRepository.Obter_Todos_Usuarios_Repository();
-        if (Lista_Usuarios_Entities == null)
+        UsuarioEntity? UserEntity = await _repository.ProcurarUsuarioEmailRepository(Email);
+        if (UserEntity == null) 
         {
             return null;
         }
-
-        foreach (var usuario_entity in Lista_Usuarios_Entities)
+        return new UsuarioResponse(UserEntity.Id, UserEntity.Nome, UserEntity.Email, UserEntity.Idade);
+    }
+    public async Task<UsuarioResponse?> Procurar_Usuario_PorId_Service(int Id) 
+    {
+       UsuarioEntity? UserEntity = await _repository.ProcurarUsuarioIdRepository(Id);
+        if (UserEntity == null) 
         {
-            UsuarioResponse u = new UsuarioResponse(usuario_entity.Nome, usuario_entity.Idade);
-            Lista_Usuarios_Response.Add(u);
+            return null;
         }
-
-        return Lista_Usuarios_Response;
+        return new UsuarioResponse(UserEntity.Id, UserEntity.Nome, UserEntity.Email, UserEntity.Idade);
+    }
+    public async Task<List<UsuarioResponse>?> Obter_Todos_Usuarios_Service() 
+    {
+        List<UsuarioResponse>? lista_response = new();
+        List<UsuarioEntity>? lista_entity = await _repository.ObterTodosUsuariosRepository();
+        if (lista_entity == null)
+        {
+            return null;
+        }
+        foreach (var us in lista_entity)
+        {
+            UsuarioResponse usuarioResponse = new UsuarioResponse(us.Id, us.Nome, us.Email, us.Idade);
+            lista_response.Add(usuarioResponse);
+        }
+        return lista_response;
     }
 }

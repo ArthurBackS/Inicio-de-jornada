@@ -1,11 +1,22 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ApiSimples.Models.DTOs.Request.DeletarUsuarioRequest;
 
-public class Deletar_Usuario_Request
+public class DeletarUsuarioRequest
 {
-    public String Nome{get; set;} = "";
-    public String Senha{get; set;} = "";
-    public Deletar_Usuario_Request(String Nome, String Senha) {
-        this.Nome = Nome;
+    [Required]
+    [EmailAddress]
+    public String Email { get; set; } = "";
+
+    [Required]
+    [MinLength(8)]
+    public String Senha { get; set; } = "";
+
+    public DeletarUsuarioRequest() { }
+
+    public DeletarUsuarioRequest(String Email, String Senha)
+    {
+        this.Email = Email;
         this.Senha = Senha;
     }
 }
